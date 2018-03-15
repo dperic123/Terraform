@@ -1,0 +1,198 @@
+Learning Terraform using Pluralsight
+
+
+
+Just an executable written in golang
+Go to website and download exe
+[] are looking for multiple elements in a list
+
+######################################
+Variables:
+Variable "aws_access_key" {}
+Variable "aws_secret_key" {}
+Variable "private_key_path" {}
+Variable "key_name"{
+Default = {keyname"
+}
+Variable "network_address_space" {
+Default = "10.1.0.0/16"
+}
+Variable "subnet1_address_space"{
+Default = "10.1.0.0/24"
+}
+Variable "subnet2_address_space"{
+Default = "10.1.0.0/24"
+}
+
+
+######################################
+Provider:
+Provider "aws" {
+Access_key = "access_key"
+Secret_key = "secret_ley"
+Region = "us-east-1"
+}
+######################################
+Data:
+Data "awas_availability_zones" "available" {}
+
+######################################
+Instances:
+
+Resource "aws_instance" "nginx" {
+Ami = "choose ami"
+Instance_type = "type ex t2.micro"
+Subtnet_id "${aws_subnet.subnet1.id}"
+Vpc_security_group_ids = ["${aws_security_group.ginx-sg.id}"]
+Key_name = "{var.key.name}"
+}
+
+Connection {
+User = "ex2-user"
+Private_ley = "${file(file(var.private_key_path))}"
+}
+#Provisioning commands
+Ex:
+Provisioner "remote-exec" {
+Inline = [
+"sudo yum install nginx -y"
+"sudo service nginx start"
+]
+}
+}
+
+######################################
+Networking:
+Resource "aws_vpc "vpc" {
+Cider_block =  "${var.network_address_space}"
+Enable_dns_hostnames = "true"
+}
+Resource "aws_internet_gateway" "igw" {
+Vpc_id = "${aws_vpc.vpc.id}"
+}
+#Create subnet in vpc
+Resource "aws_subnet" "subenet1" {
+Cidr_block = "${var.subnet_address_space}"
+Vpc_id = "${aws_vpc.vpc.id}"
+#Launch new instance and auto assign public and private IP
+Map_public_ip_on_launch = "true"
+#Asking for first element in array so for first AZ
+Avalability_zone = "${data.aws_availability_zones.avaliability.names[0]}"
+}
+Resource "aws_subnet" "subenet2" {
+Cidr_block = "${var.subnet2_address_space}"
+Vpc_id = "${aws_vpc.vpc.id}"
+Map_public_ip_on_launch = "true"
+Avalability_zone = "${data.aws_availability_zones.avaliability.names[1]}"
+
+######################################
+Routing(Create route table):
+Resource "aws_route_table" "rtb" {
+Vpc_id = "${aws_vpc.vpc.id}"
+
+Route{
+Cidr_block = "0.0.0.0/0"
+Gateway_id = "${aws_internet_gateway.igw.id}"
+}
+{
+
+Resource "aws_route_table_association" "rta-subnet1" {
+Subnet_id = "${aws_subnet.subnet1.id}"
+Route_table_id = "${awas_route_table.rtb.id}"
+}
+
+Resource "aws_route_table_association" "rta-subnet2"{
+Subnet_id = "${aws_subnet.subnet2.id}"
+Route_table_id = "{aws_route_table_rtb.id}"
+}
+######################################
+#Create Load Balancer
+Resource "aws_elb" "web"{
+Name ="name of elb"
+
+Subnets = ["${aws_subnet.subnet1.id}", "${aws_subnet.subnet2.id}"]
+Security_groups = ["${aws_security_group.elb-sg.id]"]
+Instances = ["${aws_instances.nginx1.id}", "${aws_instance.nginx2 id}"]
+
+Listener {
+Instance_port = 80
+Instance_protocol = "http"
+Lb_port = 80
+Lb_protocl = "http"
+}
+}
+
+######################################
+Security groups(create sec groups):
+Resource "awas_security_group"{
+Name = "name of ELB"
+Vpc_id = "${aws_vpc.vpc.id}"
+
+#ingress are inbound ports allowed
+#egress are outbound ports allowed
+Ingress {
+From_port = port number
+To_port = port number
+Protocol = "Type of protocol"
+Cidr_blocks = ["cidr block"]
+}
+Examples:
+#SSH Access from anywhere
+Ingress {
+From_port = 22
+To_port = 22
+Protocol = "tcp"
+Cidr_blocks = ["0.0.0.0/0"]
+}
+#HTTP Access from anywhere
+Ingress {
+From_port = 80
+To_port = 80
+Protocol = "tcp"
+Cidr_blocks = ["0.0.0.0/0"]
+}
+
+Egress {
+From_port = port number
+To_port = port number
+}
+
+Example:
+#Outbound internet Access
+Egress {
+From_port = 0
+To_port = 0
+}
+
+}
+
+#Assign sec group to ELB
+Resource "aws_elb "web" {
+Name ="name of ELB"
+
+Security_groups = ["{aws_security_group.elb-sg.id}"]
+}
+
+######################################
+Output:
+Output "aws_public_ip" {
+Value = "${aws_instance.ex.public_dns}"
+}
+
+Output "aws_instance_public_dns" {
+Value = "${aws_instance.examplenginx.public_dns}"
+}
+######################################
+Data source(queries aws for az's):
+Data "aws_availability_zones"
+"availability"{}
+
+Resource "aws_subnet" "subnet1"
+{
+Cidr_block = "${var.subnet1_address_space}"
+
+Vp_id = "${aws.vpc.vpc.id}"
+
+#takes the first available availability zone and selects it
+Availability_zone = "${data.aws_availability_zones.available.names[0]}"
+}
