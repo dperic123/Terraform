@@ -1,0 +1,4 @@
+Terraform Commands:
+Terraform - gives you commandlets to add on
+Terraform plan - shows you whats going to happen
+Terraform apply -var-files='varfile' - applys the changes
